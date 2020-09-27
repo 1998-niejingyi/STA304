@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>plot on STA304 Problem Set</title>
+    <link>/tags/plot/</link>
+    <description>Recent content in plot on STA304 Problem Set</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 23 Jul 2015 21:13:14 -0500</lastBuildDate><atom:link href="/tags/plot/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>The relationship between educational levels and total household incomes in Canada</title>
+      <link>/2015/07/23/the-relationship-between-educational-levels-and-total-household-incomes-in-canada/</link>
+      <pubDate>Thu, 23 Jul 2015 21:13:14 -0500</pubDate>
+      
+      <guid>/2015/07/23/the-relationship-between-educational-levels-and-total-household-incomes-in-canada/</guid>
+      <description>Code and data supporting this analysis is available at: https://github.com/1998-niejingyi/STA304
+We use (R Core Team 2020) and R package and (Wickham et al. 2019) to do the analysis.
+Abstract In this study, we used the 2019 CES data to explore the relationship between the educational level and the total household income in Canada. The result demonstrates people with the higher educational level in Canada tend to have more total household incomes.</description>
+    </item>
+    
+  </channel>
+</rss>

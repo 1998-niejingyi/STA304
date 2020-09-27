@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.75.1" />
+
+
+<title>The relationship between educational levels and total household incomes in Canada - STA304 Problem Set</title>
+<meta property="og:title" content="The relationship between educational levels and total household incomes in Canada - STA304 Problem Set">
+
+
+  <link href='../../../../favicon.ico' rel='icon' type='image/x-icon'/>
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="../../../../css/fonts.css" media="all">
+<link rel="stylesheet" href="../../../../css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="../../../../" class="nav-logo">
+    <img src="../../../../images/logo.png"
+         width="50"
+         height="50"
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="../../../../about/">About</a></li>
+    
+    <li><a href="https://github.com/rstudio/blogdown">GitHub</a></li>
+    
+    <li><a href="https://twitter.com/rstudio">Twitter</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">15 min read</span>
+    
+
+    <h1 class="article-title">The relationship between educational levels and total household incomes in Canada</h1>
+
+    
+    <span class="article-date">2015-07-23</span>
+    
+
+    <div class="article-content">
+      
+
+
+<p>Code and data supporting this analysis is available at:
+<a href="https://github.com/1998-niejingyi/STA304" class="uri">https://github.com/1998-niejingyi/STA304</a></p>
+<p>We use <span class="citation">(R Core Team 2020)</span> and <code>R</code> package and <span class="citation">(Wickham et al. 2019)</span> to do the analysis.</p>
+<div id="abstract" class="section level1">
+<h1>Abstract</h1>
+<p>In this study, we used the 2019 CES data to explore the relationship between the educational level and the total household income in Canada. The result demonstrates people with the higher educational level in Canada tend to have more total household incomes. In Canada, educational levels and income gap have always been a significant issue, which is the reason of this study.</p>
+</div>
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>In Canada, over 67.1% of the top 1% of income recipients had attained a university degree; in contrast, only 10% of who had a diploma below bachelor level or post-secondary certificate made it into the top 10% of income recipients (<span class="citation">Geschwender and Guppy (1995)</span>). In order to find out whether the wage gap of different educational levels has narrowed over time, we used 2019 CES data to research the relationship between educational levels and total household incomes in Canada.</p>
+<p>In the study, we created and analyzed a subset of the 2019 CES online survey dataset. The main research variables are educational levels and total household incomes in Canada. Through data analysis, we found that total household incomes in Canada is different for each educational level as well as the highly educated Canadian might have higher incomes.</p>
+<p>Nonetheless, My study still have some weaknesses. Specifically, we did not analyze lurking variables that could potentially affect this finding, such as gender and family’s financial situation. In the future work, we would find effective methods to decrease the influence of outliers and made a linear regression to explain the association between educational levels and total household incomes in Canada.</p>
+</div>
+<div id="data-discussion" class="section level1">
+<h1>Data Discussion</h1>
+<p>The 2019 Canadian Election Study Online Surveys indicates the information of Canadian who participated in the 2019 election, including gender, citizenship, yob and province, and Canadian’s attitudes towards the election. The data in the online survey is contained in the CES dataset.</p>
+<p>The <code>ces2019_web_sub</code> is a created subset of the 2019 CES online surveys which includes seven variables (citizenship, yob, gender, province, education, votechoice and income). It provides various data for our study of the relationship between educational levels and total household incomes in Canada.</p>
+<pre class="r"><code># install.packages(&quot;devtools&quot;)
+# devtools::install_github(&quot;hodgettsp/cesR&quot;)
+library(labelled)
+
+get_ces(&quot;ces2019_web&quot;)
+## TO CITE THIS SURVEY FILE:
+## 
+## - Stephenson, Laura B; Harell, Allison; Rubenson, Daniel; Loewen, Peter John, 2020, &#39;2019 Canadian Election Study - Online Survey&#39;, https://doi.org/10.7910/DVN/DUS88V, Harvard Dataverse, V1
+## 
+## - Stephenson, Laura, Allison Harrel, Daniel Rubenson and Peter Loewen. Forthcoming. &#39;Measuring Preferences and Behaviour in the 2019 Canadian Election Study,&#39; Canadian Journal of Political Science.
+## 
+## LINK: https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/DUS88V
+
+ces2019_web &lt;- to_factor(ces2019_web)
+head(ces2019_web)
+## # A tibble: 6 x 620
+##   cps19_StartDate     cps19_EndDate       cps19_ResponseId cps19_consent
+##   &lt;dttm&gt;              &lt;dttm&gt;              &lt;chr&gt;            &lt;fct&gt;        
+## 1 2019-09-13 08:09:44 2019-09-13 08:36:19 R_1OpYXEFGzHRUp… I consent to…
+## 2 2019-09-13 08:39:09 2019-09-13 08:57:06 R_2qdrL3J618rxY… I consent to…
+## 3 2019-09-13 10:01:19 2019-09-13 10:27:29 R_USWDAPcQEQiMm… I consent to…
+## 4 2019-09-13 10:05:37 2019-09-13 10:50:53 R_3IQaeDXy0tBzE… I consent to…
+## 5 2019-09-13 10:05:52 2019-09-13 10:32:53 R_27WeMQ1asip2c… I consent to…
+## 6 2019-09-13 10:10:20 2019-09-13 10:29:45 R_3LiGZcCWJEcWV… I consent to…
+## # … with 616 more variables: cps19_citizenship &lt;fct&gt;, cps19_yob &lt;fct&gt;,
+## #   cps19_yob_2001_age &lt;fct&gt;, cps19_gender &lt;fct&gt;, cps19_province &lt;fct&gt;,
+## #   cps19_education &lt;fct&gt;, cps19_demsat &lt;fct&gt;, cps19_imp_iss &lt;chr&gt;,
+## #   cps19_imp_iss_party &lt;fct&gt;, cps19_imp_iss_party_7_TEXT &lt;chr&gt;,
+## #   cps19_imp_loc_iss &lt;chr&gt;, cps19_imp_loc_iss_p &lt;fct&gt;,
+## #   cps19_imp_loc_iss_p_7_TEXT &lt;chr&gt;, cps19_interest_gen_1 &lt;dbl&gt;,
+## #   cps19_interest_elxn_1 &lt;dbl&gt;, cps19_v_likely &lt;fct&gt;, cps19_v_likely_pr &lt;fct&gt;,
+## #   cps19_votechoice &lt;fct&gt;, cps19_votechoice_7_TEXT &lt;chr&gt;,
+## #   cps19_votechoice_pr &lt;fct&gt;, cps19_votechoice_pr_7_TEXT &lt;chr&gt;,
+## #   cps19_vote_unlikely &lt;fct&gt;, cps19_vote_unlikely_7_TEXT &lt;chr&gt;,
+## #   cps19_vote_unlike_pr &lt;fct&gt;, cps19_vote_unlike_pr_7_TEXT &lt;chr&gt;,
+## #   cps19_v_advance &lt;fct&gt;, cps19_v_advance_7_TEXT &lt;chr&gt;, cps19_vote_lean &lt;fct&gt;,
+## #   cps19_vote_lean_7_TEXT &lt;chr&gt;, cps19_vote_lean_pr &lt;fct&gt;,
+## #   cps19_vote_lean_pr_7_TEXT &lt;chr&gt;, cps19_2nd_choice &lt;fct&gt;,
+## #   cps19_2nd_choice_7_TEXT &lt;chr&gt;, cps19_2nd_choice_pr &lt;fct&gt;,
+## #   cps19_2nd_choice_pr_7_TEXT &lt;chr&gt;, cps19_not_vote_for_1 &lt;fct&gt;,
+## #   cps19_not_vote_for_2 &lt;fct&gt;, cps19_not_vote_for_3 &lt;fct&gt;,
+## #   cps19_not_vote_for_4 &lt;fct&gt;, cps19_not_vote_for_5 &lt;fct&gt;,
+## #   cps19_not_vote_for_6 &lt;fct&gt;, cps19_not_vote_for_7 &lt;fct&gt;,
+## #   cps19_not_vote_for_8 &lt;fct&gt;, cps19_not_vote_for_9 &lt;fct&gt;,
+## #   cps19_not_vote_for_7_TEXT &lt;chr&gt;, cps19_fed_gov_sat &lt;fct&gt;,
+## #   cps19_party_rating_23 &lt;dbl&gt;, cps19_party_rating_24 &lt;dbl&gt;,
+## #   cps19_party_rating_25 &lt;dbl&gt;, cps19_party_rating_26 &lt;dbl&gt;,
+## #   cps19_party_rating_27 &lt;dbl&gt;, cps19_party_rating_28 &lt;dbl&gt;,
+## #   cps19_lead_rating_23 &lt;dbl&gt;, cps19_lead_rating_24 &lt;dbl&gt;,
+## #   cps19_lead_rating_25 &lt;dbl&gt;, cps19_lead_rating_26 &lt;dbl&gt;,
+## #   cps19_lead_rating_27 &lt;dbl&gt;, cps19_lead_rating_28 &lt;dbl&gt;,
+## #   cps19_cand_rating_23 &lt;dbl&gt;, cps19_cand_rating_24 &lt;dbl&gt;,
+## #   cps19_cand_rating_25 &lt;dbl&gt;, cps19_cand_rating_26 &lt;dbl&gt;,
+## #   cps19_cand_rating_27 &lt;dbl&gt;, cps19_cand_rating_28 &lt;dbl&gt;,
+## #   cps19_lr_scale_bef_1 &lt;dbl&gt;, cps19_lr_parties_1 &lt;dbl&gt;,
+## #   cps19_lr_parties_2 &lt;dbl&gt;, cps19_lr_parties_3 &lt;dbl&gt;,
+## #   cps19_lr_parties_4 &lt;dbl&gt;, cps19_lr_parties_5 &lt;dbl&gt;,
+## #   cps19_lr_parties_6 &lt;dbl&gt;, cps19_lr_scale_aft_1 &lt;dbl&gt;,
+## #   cps19_lead_int_113 &lt;fct&gt;, cps19_lead_int_114 &lt;fct&gt;,
+## #   cps19_lead_int_115 &lt;fct&gt;, cps19_lead_int_116 &lt;fct&gt;,
+## #   cps19_lead_int_117 &lt;fct&gt;, cps19_lead_int_118 &lt;fct&gt;,
+## #   cps19_lead_int_119 &lt;fct&gt;, cps19_lead_int_120 &lt;fct&gt;,
+## #   cps19_lead_strong_113 &lt;fct&gt;, cps19_lead_strong_114 &lt;fct&gt;,
+## #   cps19_lead_strong_115 &lt;fct&gt;, cps19_lead_strong_116 &lt;fct&gt;,
+## #   cps19_lead_strong_117 &lt;fct&gt;, cps19_lead_strong_118 &lt;fct&gt;,
+## #   cps19_lead_strong_119 &lt;fct&gt;, cps19_lead_strong_120 &lt;fct&gt;,
+## #   cps19_lead_trust_113 &lt;fct&gt;, cps19_lead_trust_114 &lt;fct&gt;,
+## #   cps19_lead_trust_115 &lt;fct&gt;, cps19_lead_trust_116 &lt;fct&gt;,
+## #   cps19_lead_trust_117 &lt;fct&gt;, cps19_lead_trust_118 &lt;fct&gt;,
+## #   cps19_lead_trust_119 &lt;fct&gt;, cps19_lead_trust_120 &lt;fct&gt;,
+## #   cps19_lead_cares_113 &lt;fct&gt;, cps19_lead_cares_114 &lt;fct&gt;,
+## #   cps19_lead_cares_115 &lt;fct&gt;, cps19_lead_cares_116 &lt;fct&gt;, …</code></pre>
+<pre class="r"><code>new_ces2019_web &lt;- ces2019_web %&gt;%
+  select(5, 6, 8, 9, 10, 22, 250)
+head(new_ces2019_web)
+## # A tibble: 6 x 7
+##   cps19_citizensh… cps19_yob cps19_gender cps19_province cps19_education
+##   &lt;fct&gt;            &lt;fct&gt;     &lt;fct&gt;        &lt;fct&gt;          &lt;fct&gt;          
+## 1 Canadian citizen 1989      A woman      Quebec         Master&#39;s degree
+## 2 Canadian citizen 1998      A woman      Quebec         Master&#39;s degree
+## 3 Canadian citizen 2000      A woman      Ontario        Some university
+## 4 Canadian citizen 1998      A man        Ontario        Some university
+## 5 Canadian citizen 2000      A woman      Ontario        Completed seco…
+## 6 Canadian citizen 1999      A woman      Ontario        Some university
+## # … with 2 more variables: cps19_votechoice &lt;fct&gt;, cps19_income_number &lt;dbl&gt;
+
+ces2019_web_sub &lt;- new_ces2019_web %&gt;%
+  rename(citizenship = cps19_citizenship,
+         yob = cps19_yob,
+         gender = cps19_gender,
+         province = cps19_province,
+         education = cps19_education,
+         votechoice = cps19_votechoice,
+         income = cps19_income_number)</code></pre>
+<p>The below table shows some essenetial variables in the <code>ces2019_web_sub</code> dataset and their description.</p>
+<pre class="r"><code>ces2019_web_sub_describe &lt;- data.frame(vars = c(&quot;gender&quot;, &quot;education&quot;),
+                            CES = c(&quot;votechoice&quot;, 
+                                    &quot;income&quot;))
+colnames(ces2019_web_sub_describe) &lt;- c(&quot;Consent and quota demographics variables&quot;, &quot;Democarcy, voting and parties variables&quot;)
+kable(ces2019_web_sub_describe, caption=&quot;The essential variables in the ces2019_web_sub dataset and their description&quot;)</code></pre>
+<table>
+<caption><span id="tab:unnamed-chunk-3">Table 1: </span>The essential variables in the ces2019_web_sub dataset and their description</caption>
+<colgroup>
+<col width="50%" />
+<col width="49%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">Consent and quota demographics variables</th>
+<th align="left">Democarcy, voting and parties variables</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">gender</td>
+<td align="left">votechoice</td>
+</tr>
+<tr class="even">
+<td align="left">education</td>
+<td align="left">income</td>
+</tr>
+</tbody>
+</table>
+<p>The data summary indicates the detailed statistics of the type and the missing value pattern of each variable in the dataset. Besides, some summary statistics, such as the number of rows, the number of columns and the column type frequency, are also shown below.</p>
+<pre class="r"><code>skimr::skim(ces2019_web_sub)</code></pre>
+<table>
+<caption><span id="tab:unnamed-chunk-4">Table 2: </span>Data summary</caption>
+<tbody>
+<tr class="odd">
+<td align="left">Name</td>
+<td align="left">ces2019_web_sub</td>
+</tr>
+<tr class="even">
+<td align="left">Number of rows</td>
+<td align="left">37822</td>
+</tr>
+<tr class="odd">
+<td align="left">Number of columns</td>
+<td align="left">7</td>
+</tr>
+<tr class="even">
+<td align="left">_______________________</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">Column type frequency:</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left">factor</td>
+<td align="left">6</td>
+</tr>
+<tr class="odd">
+<td align="left">numeric</td>
+<td align="left">1</td>
+</tr>
+<tr class="even">
+<td align="left">________________________</td>
+<td align="left"></td>
+</tr>
+<tr class="odd">
+<td align="left">Group variables</td>
+<td align="left">None</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: factor</strong></p>
+<table>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="left">ordered</th>
+<th align="right">n_unique</th>
+<th align="left">top_counts</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">citizenship</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="left">FALSE</td>
+<td align="right">2</td>
+<td align="left">Can: 36480, Per: 1342, Oth: 0</td>
+</tr>
+<tr class="even">
+<td align="left">yob</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="left">FALSE</td>
+<td align="right">82</td>
+<td align="left">198: 814, 199: 812, 195: 799, 195: 795</td>
+</tr>
+<tr class="odd">
+<td align="left">gender</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="left">FALSE</td>
+<td align="right">3</td>
+<td align="left">A w: 21980, A m: 15551, Oth: 291</td>
+</tr>
+<tr class="even">
+<td align="left">province</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="left">FALSE</td>
+<td align="right">13</td>
+<td align="left">Ont: 14808, Que: 8399, Alb: 4481, Bri: 4354</td>
+</tr>
+<tr class="odd">
+<td align="left">education</td>
+<td align="right">0</td>
+<td align="right">1.00</td>
+<td align="left">FALSE</td>
+<td align="right">12</td>
+<td align="left">Bac: 9192, Com: 7702, Com: 5865, Som: 4394</td>
+</tr>
+<tr class="even">
+<td align="left">votechoice</td>
+<td align="right">6258</td>
+<td align="right">0.83</td>
+<td align="left">FALSE</td>
+<td align="right">8</td>
+<td align="left">Lib: 8949, Con: 8713, Don: 4908, ndp: 4328</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Variable type: numeric</strong></p>
+<table>
+<colgroup>
+<col width="5%" />
+<col width="4%" />
+<col width="5%" />
+<col width="23%" />
+<col width="24%" />
+<col width="1%" />
+<col width="2%" />
+<col width="2%" />
+<col width="2%" />
+<col width="25%" />
+<col width="2%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">skim_variable</th>
+<th align="right">n_missing</th>
+<th align="right">complete_rate</th>
+<th align="right">mean</th>
+<th align="right">sd</th>
+<th align="right">p0</th>
+<th align="right">p25</th>
+<th align="right">p50</th>
+<th align="right">p75</th>
+<th align="right">p100</th>
+<th align="left">hist</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">income</td>
+<td align="right">12266</td>
+<td align="right">0.68</td>
+<td align="right">264034185582906059836423094327960510081066681827994894336</td>
+<td align="right">42209149379650932081746452732107853984239572192317530963968</td>
+<td align="right">0</td>
+<td align="right">43000</td>
+<td align="right">72000</td>
+<td align="right">110000</td>
+<td align="right">6747657646756748038214053957085787537772224306271081285550080</td>
+<td align="left">▇▁▁▁▁</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>summary(ces2019_web_sub$income)
+##                                                          Min. 
+##                                                             0 
+##                                                       1st Qu. 
+##                                                         43000 
+##                                                        Median 
+##                                                         72000 
+##                                                          Mean 
+##     264034185582906059836423094327960510081066681827994894336 
+##                                                       3rd Qu. 
+##                                                        110000 
+##                                                          Max. 
+## 6747657646756748038214053957085787537772224306271081285550080 
+##                                                          NA&#39;s 
+##                                                         12266
+ces2019_web_sub_sum &lt;- data.frame(Min = 0,
+                       first_q = 43000,
+                       median = 72000,
+                       third_q = 110000)
+colnames(ces2019_web_sub_sum) &lt;- c(&quot;Minimum&quot;, &quot;1st Quartile&quot;, &quot;Median&quot;, &quot;3rd Quartile&quot;)
+kable(ces2019_web_sub_sum, caption=&quot;The summary statistics of total household incomes in Canada&quot;)</code></pre>
+<table>
+<caption><span id="tab:unnamed-chunk-5">Table 3: </span>The summary statistics of total household incomes in Canada</caption>
+<thead>
+<tr class="header">
+<th align="right">Minimum</th>
+<th align="right">1st Quartile</th>
+<th align="right">Median</th>
+<th align="right">3rd Quartile</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">0</td>
+<td align="right">43000</td>
+<td align="right">72000</td>
+<td align="right">110000</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>max(ces2019_web_sub$income, na.rm = T)
+## [1] 6747657646756748038214053957085787537772224306271081285550080</code></pre>
+<p>From the above, we find there exists some extremely large numbers, such as 6747657646756748038404068808844002026462604480266204600086080, which may be outliers in the dataset. In order to avoid errors in the result, we only include income values that are less than 1000000.</p>
+<pre class="r"><code>ces2019_web_sub &lt;- 
+  ces2019_web_sub %&gt;% 
+  filter(income &lt; 1000000)</code></pre>
+<p>The variables we focus on are education and income.</p>
+<p>The summary statistics for the two variables are shown below.</p>
+<pre class="r"><code>summary(ces2019_web_sub$income)
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##       0   43000   72000   84318  110000  999000</code></pre>
+<p>The minimum income is 0 dollar.</p>
+<p>The first quartile of income is 43000 dollars.</p>
+<p>The median income is 72000 dollars.</p>
+<p>The mean income is 84318 dollars.</p>
+<p>The third quartile of income is 110000 dollars.</p>
+<p>The maximum income is 999000 dollars.</p>
+<pre class="r"><code>ces2019_web_sub %&gt;% 
+  ggplot(aes(x = income)) +
+  geom_histogram(col=&quot;black&quot;, fill=&quot;blue&quot;, alpha=0.5) + theme_classic() + 
+  labs(title=&quot;The histogram of total household incomes in Canada&quot;, 
+       caption = &quot;Data source: ces2019_web_sub dataset that is part of 2019 CES dataset&quot;)
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.</code></pre>
+<p><img src="../../../../post/2015-07-23-r-rmarkdown_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<pre class="r"><code>levels(ces2019_web_sub$education)
+##  [1] &quot;No schooling&quot;                                                    
+##  [2] &quot;Some elementary school&quot;                                          
+##  [3] &quot;Completed elementary school&quot;                                     
+##  [4] &quot;Some secondary/ high school&quot;                                     
+##  [5] &quot;Completed secondary/ high school&quot;                                
+##  [6] &quot;Some technical, community college, CEGEP, College Classique&quot;     
+##  [7] &quot;Completed technical, community college, CEGEP, College Classique&quot;
+##  [8] &quot;Some university&quot;                                                 
+##  [9] &quot;Bachelor&#39;s degree&quot;                                               
+## [10] &quot;Master&#39;s degree&quot;                                                 
+## [11] &quot;Professional degree or doctorate&quot;                                
+## [12] &quot;Don&#39;t know/ Prefer not to answer&quot;
+table(ces2019_web_sub$education)
+## 
+##                                                     No schooling 
+##                                                               18 
+##                                           Some elementary school 
+##                                                               46 
+##                                      Completed elementary school 
+##                                                              172 
+##                                      Some secondary/ high school 
+##                                                              953 
+##                                 Completed secondary/ high school 
+##                                                             3693 
+##      Some technical, community college, CEGEP, College Classique 
+##                                                             2929 
+## Completed technical, community college, CEGEP, College Classique 
+##                                                             5376 
+##                                                  Some university 
+##                                                             2385 
+##                                                Bachelor&#39;s degree 
+##                                                             6523 
+##                                                  Master&#39;s degree 
+##                                                             2311 
+##                                 Professional degree or doctorate 
+##                                                             1076 
+##                                 Don&#39;t know/ Prefer not to answer 
+##                                                               23
+round(prop.table(table(ces2019_web_sub$education)), 4)
+## 
+##                                                     No schooling 
+##                                                           0.0007 
+##                                           Some elementary school 
+##                                                           0.0018 
+##                                      Completed elementary school 
+##                                                           0.0067 
+##                                      Some secondary/ high school 
+##                                                           0.0374 
+##                                 Completed secondary/ high school 
+##                                                           0.1448 
+##      Some technical, community college, CEGEP, College Classique 
+##                                                           0.1148 
+## Completed technical, community college, CEGEP, College Classique 
+##                                                           0.2108 
+##                                                  Some university 
+##                                                           0.0935 
+##                                                Bachelor&#39;s degree 
+##                                                           0.2558 
+##                                                  Master&#39;s degree 
+##                                                           0.0906 
+##                                 Professional degree or doctorate 
+##                                                           0.0422 
+##                                 Don&#39;t know/ Prefer not to answer 
+##                                                           0.0009</code></pre>
+<p>25.58% of the individuals in the dataset are Bachelor’s degree, 0.67% of the individuals in the dataset are Completed elementary school, 14.48% of the individuals in the dataset are Completed secondary/ high school, 21.08% of the individuals in the dataset are Completed technical, community college, CEGEP, College Classique, 0.09% of the individuals in the dataset are Don’t know/ Prefer not to answer, 9.06% of the individuals in the datset are Master’s degree. 0.07% of the individuals in the dataset are No schooling. 4.22% of the individuals in the dataset are Professional degree or doctorate. 0.18% of the individuals in the dataset are Some elementary school. 3.74% of the individuals in the dataset are Some secondary/ high school, 11.48% of the individuals in the dataset are Some technical, community college, CEGEP, College Classique, 9.35% of the individuals in the dataset are Some university.</p>
+<pre class="r"><code>ces2019_web_sub %&gt;% 
+  ggplot(aes(x = education)) +
+  geom_bar(col=&quot;black&quot;, fill=&quot;blue&quot;) + theme_bw() + 
+  labs(title=&quot;The bar plot of education&quot;, 
+       caption = &quot;Data source: ces2019_web_sub dataset that is part of 2019 CES dataset&quot;)</code></pre>
+<p><img src="../../../../post/2015-07-23-r-rmarkdown_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+</div>
+<div id="graph" class="section level1">
+<h1>Graph</h1>
+<pre class="r"><code>ggplot(ces2019_web_sub, aes(x=education, y=income)) + 
+  geom_boxplot(outlier.colour=&quot;green&quot;,
+                outlier.size=1) + theme_bw() + 
+  labs(title=&quot;The box plot of total household incomes in Canada by education&quot;, 
+       caption = &quot;Data source: ces2019_web_sub dataset that is part of 2019 CES dataset&quot;)</code></pre>
+<p><img src="../../../../post/2015-07-23-r-rmarkdown_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p>We find there are lots of outliers in the box plots.</p>
+<pre class="r"><code>ces2019_web_sub %&gt;% group_by(education) %&gt;% 
+  summarise(income_u = mean(income))
+## `summarise()` ungrouping output (override with `.groups` argument)
+## # A tibble: 12 x 2
+##    education                                                        income_u
+##    &lt;fct&gt;                                                               &lt;dbl&gt;
+##  1 No schooling                                                       66183.
+##  2 Some elementary school                                             42353.
+##  3 Completed elementary school                                        50859.
+##  4 Some secondary/ high school                                        54470.
+##  5 Completed secondary/ high school                                   61737.
+##  6 Some technical, community college, CEGEP, College Classique        70264.
+##  7 Completed technical, community college, CEGEP, College Classique   80018.
+##  8 Some university                                                    80921.
+##  9 Bachelor&#39;s degree                                                  98172.
+## 10 Master&#39;s degree                                                   107422.
+## 11 Professional degree or doctorate                                  129607.
+## 12 Don&#39;t know/ Prefer not to answer                                   72652.</code></pre>
+<pre class="r"><code>summary &lt;- ces2019_web_sub %&gt;% group_by(education) %&gt;%
+  summarise(
+    count = n(),
+    mean = mean(income, na.rm = TRUE),
+    sd = sd(income, na.rm = TRUE),
+    median = median(income, na.rm = TRUE),
+    IQR = IQR(income, na.rm = TRUE)
+  )
+## `summarise()` ungrouping output (override with `.groups` argument)
+kable(summary, digits=0, caption=&quot;The summary statistics of total househould incomes in Canada by education&quot;)</code></pre>
+<table style="width:100%;">
+<caption><span id="tab:unnamed-chunk-13">Table 4: </span>The summary statistics of total househould incomes in Canada by education</caption>
+<colgroup>
+<col width="66%" />
+<col width="6%" />
+<col width="7%" />
+<col width="7%" />
+<col width="7%" />
+<col width="6%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">education</th>
+<th align="right">count</th>
+<th align="right">mean</th>
+<th align="right">sd</th>
+<th align="right">median</th>
+<th align="right">IQR</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">No schooling</td>
+<td align="right">18</td>
+<td align="right">66183</td>
+<td align="right">61761</td>
+<td align="right">60500</td>
+<td align="right">60750</td>
+</tr>
+<tr class="even">
+<td align="left">Some elementary school</td>
+<td align="right">46</td>
+<td align="right">42353</td>
+<td align="right">34396</td>
+<td align="right">30000</td>
+<td align="right">46250</td>
+</tr>
+<tr class="odd">
+<td align="left">Completed elementary school</td>
+<td align="right">172</td>
+<td align="right">50859</td>
+<td align="right">35515</td>
+<td align="right">45000</td>
+<td align="right">42140</td>
+</tr>
+<tr class="even">
+<td align="left">Some secondary/ high school</td>
+<td align="right">953</td>
+<td align="right">54470</td>
+<td align="right">66601</td>
+<td align="right">40000</td>
+<td align="right">45000</td>
+</tr>
+<tr class="odd">
+<td align="left">Completed secondary/ high school</td>
+<td align="right">3693</td>
+<td align="right">61737</td>
+<td align="right">53298</td>
+<td align="right">50000</td>
+<td align="right">50000</td>
+</tr>
+<tr class="even">
+<td align="left">Some technical, community college, CEGEP, College Classique</td>
+<td align="right">2929</td>
+<td align="right">70264</td>
+<td align="right">55505</td>
+<td align="right">60000</td>
+<td align="right">55000</td>
+</tr>
+<tr class="odd">
+<td align="left">Completed technical, community college, CEGEP, College Classique</td>
+<td align="right">5376</td>
+<td align="right">80018</td>
+<td align="right">64812</td>
+<td align="right">70000</td>
+<td align="right">58000</td>
+</tr>
+<tr class="even">
+<td align="left">Some university</td>
+<td align="right">2385</td>
+<td align="right">80921</td>
+<td align="right">68479</td>
+<td align="right">70000</td>
+<td align="right">60000</td>
+</tr>
+<tr class="odd">
+<td align="left">Bachelor’s degree</td>
+<td align="right">6523</td>
+<td align="right">98172</td>
+<td align="right">66434</td>
+<td align="right">85000</td>
+<td align="right">67000</td>
+</tr>
+<tr class="even">
+<td align="left">Master’s degree</td>
+<td align="right">2311</td>
+<td align="right">107422</td>
+<td align="right">73301</td>
+<td align="right">95000</td>
+<td align="right">74500</td>
+</tr>
+<tr class="odd">
+<td align="left">Professional degree or doctorate</td>
+<td align="right">1076</td>
+<td align="right">129607</td>
+<td align="right">109520</td>
+<td align="right">100000</td>
+<td align="right">80000</td>
+</tr>
+<tr class="even">
+<td align="left">Don’t know/ Prefer not to answer</td>
+<td align="right">23</td>
+<td align="right">72652</td>
+<td align="right">76095</td>
+<td align="right">61000</td>
+<td align="right">80000</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>residual.aov &lt;- aov(income ~ education, data = ces2019_web_sub)
+summary(residual.aov)
+##                Df          Sum Sq      Mean Sq F value              Pr(&gt;F)    
+## education      11   8412913595447 764810326859     174 &lt;0.0000000000000002 ***
+## Residuals   25493 112040764096726   4394961915                                
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>qqnorm(ces2019_web_sub$income, col = &quot;blue&quot;, main=&quot;The normal Q-Q plot of total household incomes in Canada&quot;)
+qqline(ces2019_web_sub$income)</code></pre>
+<p><img src="../../../../post/2015-07-23-r-rmarkdown_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<p>The normal Q-Q plot demonstrates not all plots on the reference line, so, income is not approximately normal. Then we will use Kruskal-Wallis test, which is a non-parametric version of the Analysis of Variance (ANOVA).</p>
+<pre class="r"><code>kruskal.test(income ~ education, data = ces2019_web_sub)
+## 
+##  Kruskal-Wallis rank sum test
+## 
+## data:  income by education
+## Kruskal-Wallis chi-squared = 2809.4, df = 11, p-value &lt;
+## 0.00000000000000022</code></pre>
+</div>
+<div id="group-discussion" class="section level1">
+<h1>Group Discussion</h1>
+<p>The histogram of total household incomes in Canada shows the distribution of income is right-skewed, so income may not be normal distribution. In addition, the bar plot visually indicates the number of people with bachelor’s degree is the largest, and the number of people with no schooling is the least. The summary statistics shows the median income and IQR are highest for people with professional degree or doctorate and the median income is lowest for people with
+some elementary school and the IQR is the lowest for people with completed elementary school,which seems that the higher educational level which people have, the higher the total household incomes. The box plots also show people with high educational level would have higher incomes in Canada.</p>
+</div>
+<div id="discussion" class="section level1">
+<h1>Discussion</h1>
+<p>Total household incomes in Canada differs by people’s educational levels. The income of people with high educational level, especially professional degree or doctorate and master’s degree is remarkably higher than the incomes of people with low educational level. It is supported by the box plots and the summary statistics of income by educational levels.</p>
+<p>The non-parametric ANOVA tests also illustrates there exists significant differences among the incomes of people with distinct educational levels.</p>
+<p>We exclude some extremely large income values to avoid potential errors in the result and only include income values that are less than 1000000, which is reasonable since the top 1% highest income in Canada cannot represent the income level of most Canadian.</p>
+</div>
+<div id="weaknesses-and-next-steps" class="section level1">
+<h1>Weaknesses and next steps</h1>
+<ul>
+<li>Weakness: lurking variables</li>
+</ul>
+<p>Our analysis only accounts for the affect of educational levels on incomes, but
+does not analyze other variables which may influence incomes. For instance, family’s financial situation, which can be a lurking variable, might also affect incomes. In the summary statistics, we can find the median income of people with no schooling is higher than the median income of people with some elementary school and some secondary/ high school. It may be because that the family’s financial situation of some people with no schooling is better than the family’s financial situation of those with higher educational level.</p>
+<p>In order to obtain a more accurate result, we need to do multiple comparison tests on the two variables, education and income, to find out the differences among educational levels in terms of the income. Nevertheless, we can draw the conclusion based on the results of the summary statistics and the box plots since the dataset sample size is large.</p>
+<ul>
+<li>Next steps</li>
+</ul>
+<p>Firstly, we can research other relative variables, such as gender, and analyze their relationship with income. Then, we might find valid methods to decrease bias and reduce the influence of outliers on the result. Further, we can try to build a linear regression model to analyze and explain the relationship between educational levels and total household incomes in Canada.</p>
+</div>
+<div id="references" class="section level1">
+<h1>references</h1>
+<ul>
+<li><p>Stephenson, Laura B; Harell, Allison; Rubenson, Daniel; Loewen, Peter John, 2020, ‘2019 Canadian Election Study - Online Survey’, <a href="https://doi.org/10.7910/DVN/DUS88V" class="uri">https://doi.org/10.7910/DVN/DUS88V</a>, Harvard Dataverse, V1</p></li>
+<li><p>Stephenson, Laura, Allison Harrel, Daniel Rubenson and Peter Loewen. Forthcoming. ‘Measuring Preferences and Behaviour in the 2019 Canadian Election Study,’ Canadian Journal of Political Science.</p></li>
+</ul>
+<p>LINK: <a href="https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/DUS88V" class="uri">https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/DUS88V</a></p>
+<ul>
+<li><p>Paul A. Hodgetts and Rohan Alexander (2020). cesR: Access the CES Datasets a Little Easier.. R package version 0.1.0.</p></li>
+<li><p>Hadley Wickham, Jim Hester and Winston Chang (2020). devtools: Tools to Make Developing R Packages Easier. <a href="https://devtools.r-lib.org/,https://github.com/r-lib/devtools" class="uri">https://devtools.r-lib.org/,https://github.com/r-lib/devtools</a>.</p></li>
+<li><p>R Core Team (2020). R: A language and environment for statistical computing. R, Foundation for
+Statistical Computing, Vienna, Austria. URL, <a href="https://www.R-project.org/" class="uri">https://www.R-project.org/</a>.</p></li>
+<li><p>JJ Allaire and Yihui Xie and Jonathan McPherson and Javier Luraschi and Kevin Ushey and Aron Atkins and Hadley Wickham and Joe Cheng and Winston Chang and Richard Iannone (2020). rmarkdown: Dynamic Documents for R. R package version 2.3. URL <a href="https://rmarkdown.rstudio.com" class="uri">https://rmarkdown.rstudio.com</a>.</p></li>
+<li><p>Geschwender, James A., and Neil Guppy. “Ethnicity, educational attainment, and earned income among Canadian-born men and women.” Canadian Ethnic Studies 27.1 (1995): 67.</p></li>
+</ul>
+<div id="refs" class="references">
+<div id="ref-incomeedu">
+<p>Geschwender, James A, and Neil Guppy. 1995. “Ethnicity, Educational Attainment, and Earned Income Among Canadian-Born Men and Women.” <em>Canadian Ethnic Studies</em> 27 (1): 67.</p>
+</div>
+<div id="ref-cite_R">
+<p>R Core Team. 2020. <em>R: A Language and Environment for Statistical Computing</em>. Vienna, Austria: R Foundation for Statistical Computing. <a href="https://www.R-project.org/">https://www.R-project.org/</a>.</p>
+</div>
+<div id="ref-cite_tidyverse">
+<p>Wickham, Hadley, Mara Averick, Jennifer Bryan, Winston Chang, Lucy D’Agostino McGowan, Romain François, Garrett Grolemund, et al. 2019. “Welcome to the tidyverse.” <em>Journal of Open Source Software</em> 4 (43): 1686. <a href="https://doi.org/10.21105/joss.01686">https://doi.org/10.21105/joss.01686</a>.</p>
+</div>
+</div>
+</div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="../../../../index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="../../../../images/hugo-logo.png" alt="Img link to Hugo website" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+<script src="../../../../js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+  </body>
+</html>
+

@@ -1,0 +1,244 @@
+---
+title: "The relationship between educational levels and total household incomes in Canada"
+author: "Jingyi Nie"
+date: 2015-07-23T21:13:14-05:00
+categories: ["R"]
+bibliography: "references.bib"
+tags: ["R Markdown", "plot", "regression"]
+---
+
+Code and data supporting this analysis is available at:
+https://github.com/1998-niejingyi/STA304
+
+We use [@cite_R] and `R` package and [@cite_tidyverse] to do the analysis.
+
+# Abstract
+
+In this study, we used the 2019 CES data to explore the relationship between the educational level and the total household income in Canada. The result demonstrates people with the higher educational level in Canada tend to have more total household incomes. In Canada, educational levels and income gap have always been a significant issue, which is the reason of this study.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE)
+options(scipen=999)
+ #install.packages("tidyverse")
+ #install.packages("devtools")
+ #devtools::install_github("hodgettsp/cesR")
+library(tidyverse)
+library(visdat)
+library(cesR)
+library(skimr)
+library(knitr)
+```
+
+# Introduction
+
+In Canada, over 67.1% of the top 1% of income recipients had attained a university degree; in contrast, only 10% of who had a diploma below bachelor level or post-secondary certificate made it into the top 10% of income recipients (@incomeedu). In order to find out whether the wage gap of different educational levels has narrowed over time, we used 2019 CES data to research the relationship between educational levels and total household incomes in Canada. 
+
+In the study, we created and analyzed a subset of the 2019 CES online survey dataset. The main research variables are educational levels and total household incomes in Canada. Through data analysis, we found that total household incomes in Canada is different for each educational level as well as the highly educated Canadian might have higher incomes.
+
+Nonetheless, My study still have some weaknesses. Specifically, we did not analyze lurking variables that could potentially affect this finding, such as gender and family's financial situation. In the future work, we would find effective methods to decrease the influence of outliers and made a linear regression to explain the association between educational levels and total household incomes in Canada.
+
+
+# Data Discussion
+
+The 2019 Canadian Election Study Online Surveys indicates the information of Canadian who participated in the 2019 election, including gender, citizenship, yob and province, and Canadian's attitudes towards the election. The data in the online survey is contained in the CES dataset.
+
+The `ces2019_web_sub` is a created subset of the 2019 CES online surveys which includes seven variables (citizenship, yob, gender, province, education, votechoice and income). It provides various data for our study of the relationship between educational levels and total household incomes in Canada.
+
+```{r, included = FALSE}
+# install.packages("devtools")
+# devtools::install_github("hodgettsp/cesR")
+library(labelled)
+
+get_ces("ces2019_web")
+
+ces2019_web <- to_factor(ces2019_web)
+head(ces2019_web)
+```
+
+```{r}
+new_ces2019_web <- ces2019_web %>%
+  select(5, 6, 8, 9, 10, 22, 250)
+head(new_ces2019_web)
+
+ces2019_web_sub <- new_ces2019_web %>%
+  rename(citizenship = cps19_citizenship,
+         yob = cps19_yob,
+         gender = cps19_gender,
+         province = cps19_province,
+         education = cps19_education,
+         votechoice = cps19_votechoice,
+         income = cps19_income_number)
+```
+
+The below table shows some essenetial variables in the `ces2019_web_sub` dataset and their description.
+
+```{r}
+ces2019_web_sub_describe <- data.frame(vars = c("gender", "education"),
+                            CES = c("votechoice", 
+                                    "income"))
+colnames(ces2019_web_sub_describe) <- c("Consent and quota demographics variables", "Democarcy, voting and parties variables")
+kable(ces2019_web_sub_describe, caption="The essential variables in the ces2019_web_sub dataset and their description")
+```
+
+The data summary indicates the detailed statistics of the type and the missing value pattern of each variable in the dataset. Besides, some summary statistics, such as the number of rows, the number of columns and the column type frequency, are also shown below.
+
+```{r}
+skimr::skim(ces2019_web_sub)
+```
+
+```{r}
+summary(ces2019_web_sub$income)
+ces2019_web_sub_sum <- data.frame(Min = 0,
+                       first_q = 43000,
+                       median = 72000,
+                       third_q = 110000)
+colnames(ces2019_web_sub_sum) <- c("Minimum", "1st Quartile", "Median", "3rd Quartile")
+kable(ces2019_web_sub_sum, caption="The summary statistics of total household incomes in Canada")
+max(ces2019_web_sub$income, na.rm = T)
+```
+
+From the above, we find there exists some extremely large numbers, such as 6747657646756748038404068808844002026462604480266204600086080, which may be outliers in the dataset. In order to avoid errors in the result, we only include income values that are less than 1000000.
+
+```{r}
+ces2019_web_sub <- 
+  ces2019_web_sub %>% 
+  filter(income < 1000000)
+```
+
+The variables we focus on are education and income.
+
+The summary statistics for the two variables are shown below.
+
+```{r}
+summary(ces2019_web_sub$income)
+```
+
+The minimum income is 0 dollar.
+
+The first quartile of income is 43000 dollars.
+
+The median income is 72000 dollars.
+
+The mean income is 84318 dollars.
+
+The third quartile of income is 110000 dollars.
+
+The maximum income is 999000 dollars.
+
+```{r}
+ces2019_web_sub %>% 
+  ggplot(aes(x = income)) +
+  geom_histogram(col="black", fill="blue", alpha=0.5) + theme_classic() + 
+  labs(title="The histogram of total household incomes in Canada", 
+       caption = "Data source: ces2019_web_sub dataset that is part of 2019 CES dataset")
+```
+
+```{r}
+levels(ces2019_web_sub$education)
+table(ces2019_web_sub$education)
+round(prop.table(table(ces2019_web_sub$education)), 4)
+```
+
+25.58% of the individuals in the dataset are Bachelor's degree, 0.67% of the individuals in the dataset are Completed elementary school, 14.48% of the individuals in the dataset are Completed secondary/ high school, 21.08% of the individuals in the dataset are Completed technical, community college, CEGEP, College Classique, 0.09% of the individuals in the dataset are Don't know/ Prefer not to answer, 9.06% of the individuals in the datset are  Master's degree. 0.07% of the individuals in the dataset are No schooling. 4.22% of the individuals in the dataset are Professional degree or doctorate. 0.18% of the individuals in the dataset are Some elementary school. 3.74% of the individuals in the dataset are Some secondary/ high school, 11.48% of the individuals in the dataset are Some technical, community college, CEGEP, College Classique, 9.35% of the individuals in the dataset are Some university.
+
+```{r}
+ces2019_web_sub %>% 
+  ggplot(aes(x = education)) +
+  geom_bar(col="black", fill="blue") + theme_bw() + 
+  labs(title="The bar plot of education", 
+       caption = "Data source: ces2019_web_sub dataset that is part of 2019 CES dataset")
+```
+
+# Graph
+
+```{r}
+ggplot(ces2019_web_sub, aes(x=education, y=income)) + 
+  geom_boxplot(outlier.colour="green",
+                outlier.size=1) + theme_bw() + 
+  labs(title="The box plot of total household incomes in Canada by education", 
+       caption = "Data source: ces2019_web_sub dataset that is part of 2019 CES dataset")
+```
+
+We find there are lots of outliers in the box plots.
+
+```{r}
+ces2019_web_sub %>% group_by(education) %>% 
+  summarise(income_u = mean(income))
+```
+
+```{r}
+summary <- ces2019_web_sub %>% group_by(education) %>%
+  summarise(
+    count = n(),
+    mean = mean(income, na.rm = TRUE),
+    sd = sd(income, na.rm = TRUE),
+    median = median(income, na.rm = TRUE),
+    IQR = IQR(income, na.rm = TRUE)
+  )
+kable(summary, digits=0, caption="The summary statistics of total househould incomes in Canada by education")
+```
+
+```{r}
+residual.aov <- aov(income ~ education, data = ces2019_web_sub)
+summary(residual.aov)
+```
+
+```{r}
+qqnorm(ces2019_web_sub$income, col = "blue", main="The normal Q-Q plot of total household incomes in Canada")
+qqline(ces2019_web_sub$income)
+```
+
+The normal Q-Q plot demonstrates not all plots on the reference line, so, income is not approximately normal. Then we will use Kruskal-Wallis test, which is a non-parametric version of the Analysis of Variance (ANOVA).
+
+```{r}
+kruskal.test(income ~ education, data = ces2019_web_sub)
+```
+
+# Group Discussion
+
+The histogram of total household incomes in Canada shows the distribution of income is right-skewed, so income may not be normal distribution. In addition, the bar plot visually indicates the number of people with bachelor's degree is the largest, and the number of people with no schooling is the least. The summary statistics shows the median income and IQR are highest for people with professional degree or doctorate and the median income is lowest for people with 
+some elementary school and the IQR is the lowest for people with completed elementary school,which seems that the higher educational level which people have, the higher the total household incomes. The box plots also show people with high educational level would have higher incomes in Canada. 
+
+
+# Discussion 
+
+Total household incomes in Canada differs by people's educational levels. The income of people with high educational level, especially professional degree or doctorate and master's degree is remarkably higher than the incomes of people with low educational level. It is supported by the box plots and the summary statistics of income by educational levels.
+
+The non-parametric ANOVA tests also illustrates there exists significant differences among the incomes of people with distinct educational levels.
+
+We exclude some extremely large income values to avoid potential errors in the result and only include income values that are less than 1000000, which is reasonable since the top 1% highest income in Canada cannot represent the income level of most Canadian.
+
+
+# Weaknesses and next steps
+
+- Weakness: lurking variables
+
+Our analysis only accounts for the affect of educational levels on incomes, but 
+does not analyze other variables which may influence incomes. For instance, family's financial situation, which can be a lurking variable, might also affect incomes. In the summary statistics, we can find the median income of people with no schooling is higher than the median income of people with some elementary school and some secondary/ high school. It may be because that the family's financial situation of some people with no schooling is better than the family's financial situation of those with higher educational level. 
+
+In order to obtain a more accurate result, we need to do multiple comparison tests on the two variables, education and income, to find out the differences among educational levels in terms of the income. Nevertheless, we can draw the conclusion based on the results of the summary statistics and the box plots since the dataset sample size is large. 
+
+- Next steps
+
+Firstly, we can research other relative variables, such as gender, and analyze their relationship with income. Then, we might find valid methods to decrease bias and reduce the influence of outliers on the result. Further, we can try to build a linear regression model to analyze and explain the relationship between educational levels and total household incomes in Canada.
+
+
+# references
+
+- Stephenson, Laura B; Harell, Allison; Rubenson, Daniel; Loewen, Peter John, 2020, '2019 Canadian Election Study - Online Survey', https://doi.org/10.7910/DVN/DUS88V, Harvard Dataverse, V1
+
+- Stephenson, Laura, Allison Harrel, Daniel Rubenson and Peter Loewen. Forthcoming. 'Measuring Preferences and Behaviour in the 2019 Canadian Election Study,' Canadian Journal of Political Science.
+
+LINK: https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/DUS88V
+
+- Paul A. Hodgetts and Rohan Alexander (2020). cesR: Access the CES Datasets a Little Easier.. R package version 0.1.0.
+
+-  Hadley Wickham, Jim Hester and Winston Chang (2020). devtools: Tools to Make Developing R Packages Easier. https://devtools.r-lib.org/,https://github.com/r-lib/devtools.
+- R Core Team (2020). R: A language and environment for statistical computing. R, Foundation for 
+Statistical Computing, Vienna, Austria. URL, https://www.R-project.org/.
+
+- JJ Allaire and Yihui Xie and Jonathan McPherson and Javier Luraschi and Kevin Ushey and Aron Atkins and Hadley Wickham and Joe Cheng and Winston Chang and Richard Iannone (2020). rmarkdown: Dynamic Documents for R. R package version 2.3. URL https://rmarkdown.rstudio.com.
+
+- Geschwender, James A., and Neil Guppy. "Ethnicity, educational attainment, and earned income among Canadian-born men and women." Canadian Ethnic Studies 27.1 (1995): 67.
+
+
